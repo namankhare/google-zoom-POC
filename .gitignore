@@ -7,3 +7,7 @@ backend/.env
 .env
 .DS_Store
 specs/
+
+# Only backend/ is tracked in this repo
+gscript/
+spec/
