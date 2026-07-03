@@ -6,10 +6,40 @@ export default async function meetingRoutes(fastify: FastifyInstance) {
     const meetings = await prisma.meeting.findMany({
       include: {
         summaries: true,
+        logs: { orderBy: { createdAt: 'desc' } },
       },
       orderBy: { createdAt: 'desc' },
     });
-    return meetings;
+
+    const mappings = await prisma.meetingMapping.findMany();
+    const mappingByMeetingId = new Map(mappings.map((m) => [m.zoomMeetingId, m]));
+
+    const meetingRows = meetings.map((meeting) => ({
+      ...meeting,
+      mapping: mappingByMeetingId.get(meeting.meetingId) || null,
+    }));
+
+    // Include mappings that don't have a corresponding Meeting record yet
+    // (e.g. calendar event was mapped to a CRM record, but Zoom hasn't sent
+    // the transcript/summary webhook for that meeting yet).
+    const meetingIds = new Set(meetings.map((m) => m.meetingId));
+    const unmatchedMappingRows = mappings
+      .filter((m) => m.zoomMeetingId && !meetingIds.has(m.zoomMeetingId))
+      .map((mapping) => ({
+        id: `mapping-${mapping.id}`,
+        meetingId: mapping.zoomMeetingId || '',
+        meetingUuid: null,
+        topic: null,
+        hostId: null,
+        startTime: null,
+        summaryRetrieved: false,
+        createdAt: new Date(0),
+        summaries: [],
+        logs: [],
+        mapping,
+      }));
+
+    return [...meetingRows, ...unmatchedMappingRows];
   });
 
   fastify.get('/meetings/:meetingId', async (request: FastifyRequest, reply: FastifyReply) => {

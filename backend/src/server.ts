@@ -3,6 +3,7 @@ import { config } from './config/index.js';
 import webhookRoutes from './routes/webhook.js';
 import meetingRoutes from './routes/meetings.js';
 import mappingRoutes from './routes/mappings.js';
+import dashboardRoutes from './routes/dashboard.js';
 
 const fastify = Fastify({
   logger: {
@@ -16,6 +17,7 @@ const fastify = Fastify({
 fastify.register(webhookRoutes);
 fastify.register(meetingRoutes);
 fastify.register(mappingRoutes);
+fastify.register(dashboardRoutes);
 
 
 const start = async () => {
