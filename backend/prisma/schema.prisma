@@ -51,6 +51,20 @@ model WebhookEvent {
   createdAt  DateTime @default(now())
 }
 
+// Raw, unconditional audit log of every hit to the webhook endpoint,
+// regardless of event type or whether signature verification passed.
+// Kept separate from WebhookEvent (which only stores processed business events).
+model WebhookRawLog {
+  id        String   @id @default(uuid())
+  event     String?
+  method    String
+  path      String
+  verified  Boolean  @default(false)
+  headers   String   @db.Text
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
 model ProcessingLog {
   id        String   @id @default(uuid())
   meeting   Meeting? @relation(fields: [meetingId], references: [meetingId])

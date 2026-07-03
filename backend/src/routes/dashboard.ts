@@ -9,6 +9,10 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
   fastify.get('/dashboard', async (request: FastifyRequest, reply: FastifyReply) => {
     reply.type('text/html').send(DASHBOARD_HTML);
   });
+
+  fastify.get('/dashboard/logs', async (request: FastifyRequest, reply: FastifyReply) => {
+    reply.type('text/html').send(LOGS_HTML);
+  });
 }
 
 const DASHBOARD_HTML = `<!DOCTYPE html>
@@ -38,7 +42,7 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <h1>Zoom CRM POC — Meeting Dashboard</h1>
-  <p class="subtitle">Temporary internal view: meeting details, CRM mapping, summary retrieval and processing status.</p>
+  <p class="subtitle">Temporary internal view: meeting details, CRM mapping, summary retrieval and processing status. <a href="/dashboard/logs">View raw webhook logs →</a></p>
   <div id="refresh"><button onclick="loadData()">Refresh</button> <span id="status" class="muted"></span></div>
   <table>
     <thead>
@@ -143,7 +147,104 @@ async function loadData() {
 }
 
 loadData();
-setInterval(loadData, 10000);
+</script>
+</body>
+</html>`;
+
+const LOGS_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Zoom CRM POC - Webhook Logs</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; background: #f5f6f8; color: #1a1a1a; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  p.subtitle { color: #666; margin-top: 0; font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e5e5; font-size: 13px; vertical-align: top; }
+  th { background: #fafafa; position: sticky; top: 0; }
+  tr:hover { background: #fbfbfd; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-success { background: #e3f7e8; color: #1a7f37; }
+  .badge-failure { background: #fdeaea; color: #c0392b; }
+  .muted { color: #999; }
+  pre { max-width: 480px; max-height: 200px; overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 0; font-size: 11px; background: #fafafa; padding: 6px; border-radius: 4px; }
+  #refresh { margin-bottom: 12px; }
+  button { cursor: pointer; padding: 6px 14px; border-radius: 6px; border: 1px solid #ccc; background: #fff; }
+  button:hover { background: #f0f0f0; }
+  a { color: #0969da; text-decoration: none; }
+</style>
+</head>
+<body>
+  <h1>Zoom CRM POC — Raw Webhook Logs</h1>
+  <p class="subtitle"><a href="/dashboard">&larr; Back to dashboard</a> — every hit to /webhooks/zoom, verified or not, most recent first.</p>
+  <div id="refresh"><button onclick="loadData()">Refresh</button> <span id="status" class="muted"></span></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Event</th>
+        <th>Verified</th>
+        <th>Headers</th>
+        <th>Body</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+      <tr><td colspan="5" class="muted">Loading...</td></tr>
+    </tbody>
+  </table>
+
+<script>
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function prettyJson(raw) {
+  try {
+    return JSON.stringify(JSON.parse(raw), null, 2);
+  } catch (err) {
+    return raw;
+  }
+}
+
+async function loadData() {
+  var status = document.getElementById('status');
+  var rows = document.getElementById('rows');
+  status.textContent = 'Loading...';
+  try {
+    var res = await fetch('/webhook-logs');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var logs = await res.json();
+
+    if (!logs.length) {
+      rows.innerHTML = '<tr><td colspan="5" class="muted">No webhook hits recorded yet.</td></tr>';
+      status.textContent = 'Updated ' + new Date().toLocaleTimeString();
+      return;
+    }
+
+    rows.innerHTML = logs.map(function (log) {
+      var badge = log.verified
+        ? '<span class="badge badge-success">Verified</span>'
+        : '<span class="badge badge-failure">Rejected/Unverified</span>';
+      return '<tr>' +
+        '<td>' + new Date(log.createdAt).toLocaleString() + '</td>' +
+        '<td>' + escapeHtml(log.event || '-') + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td><pre>' + escapeHtml(prettyJson(log.headers)) + '</pre></td>' +
+        '<td><pre>' + escapeHtml(prettyJson(log.body)) + '</pre></td>' +
+        '</tr>';
+    }).join('');
+
+    status.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (err) {
+    rows.innerHTML = '<tr><td colspan="5" class="badge badge-failure">Failed to load: ' + escapeHtml(err.message) + '</td></tr>';
+    status.textContent = '';
+  }
+}
+
+loadData();
 </script>
 </body>
 </html>`;

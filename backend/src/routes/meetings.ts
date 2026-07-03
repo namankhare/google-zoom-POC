@@ -71,6 +71,14 @@ export default async function meetingRoutes(fastify: FastifyInstance) {
     return webhooks;
   });
 
+  fastify.get('/webhook-logs', async (request: FastifyRequest, reply: FastifyReply) => {
+    const logs = await prisma.webhookRawLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+    return logs;
+  });
+
   fastify.get('/mappings', async (request: FastifyRequest, reply: FastifyReply) => {
     const mappings = await prisma.meetingMapping.findMany();
     return mappings;
