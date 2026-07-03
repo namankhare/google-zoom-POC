@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Project specific
+.DS_Store
+backend/*.db
+backend/*.db-journal
+
+# Only backend/ is tracked in this repo
+gscript/
+spec/
+specs/
+

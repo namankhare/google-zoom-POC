@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Meeting {
+  id               String           @id @default(uuid())
+  meetingId        String           @unique
+  meetingUuid      String?          @unique
+  topic            String?
+  hostId           String?
+  startTime        DateTime?
+  summaryRetrieved Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  summaries        MeetingSummary[]
+  logs             ProcessingLog[]
+}
+
+model MeetingSummary {
+  id        String   @id @default(uuid())
+  meeting   Meeting  @relation(fields: [meetingId], references: [meetingId])
+  meetingId String
+  summary   String   @db.Text
+  rawJson   String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model MeetingMapping {
+  id                  String  @id @default(uuid())
+  calendarEventId     String? @unique
+  zoomMeetingId       String? @unique
+  crmLeadId           String?
+  customerId          String?
+  googleDriveFolderId String?
+}
+
+model WebhookEvent {
+  id         String   @id @default(uuid())
+  event      String
+  payload    String   @db.Text
+  headers    String   @db.Text
+  processed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model ProcessingLog {
+  id        String   @id @default(uuid())
+  meeting   Meeting? @relation(fields: [meetingId], references: [meetingId])
+  meetingId String?
+  step      String
+  status    String
+  error     String? @db.Text
+  createdAt DateTime @default(now())
+}
+
