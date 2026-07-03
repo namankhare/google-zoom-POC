@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
 }
 
 model Meeting {
@@ -28,8 +28,8 @@ model MeetingSummary {
   id        String   @id @default(uuid())
   meeting   Meeting  @relation(fields: [meetingId], references: [meetingId])
   meetingId String
-  summary   String
-  rawJson   String
+  summary   String   @db.Text
+  rawJson   String   @db.Text
   createdAt DateTime @default(now())
 }
 
@@ -45,8 +45,8 @@ model MeetingMapping {
 model WebhookEvent {
   id         String   @id @default(uuid())
   event      String
-  payload    String
-  headers    String
+  payload    String   @db.Text
+  headers    String   @db.Text
   processed  Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
@@ -57,7 +57,7 @@ model ProcessingLog {
   meetingId String?
   step      String
   status    String
-  error     String?
+  error     String? @db.Text
   createdAt DateTime @default(now())
 }
 

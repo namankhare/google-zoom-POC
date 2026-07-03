@@ -1,6 +1,6 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
-import { config } from '../config/index';
+import { config } from '../config/index.js';
 
 export const verifyZoomWebhook = async (request: FastifyRequest, reply: FastifyReply) => {
   const { headers, body } = request;
@@ -15,12 +15,14 @@ export const verifyZoomWebhook = async (request: FastifyRequest, reply: FastifyR
   const timestamp = headers['x-zm-request-timestamp'] as string;
 
   if (!signature || !timestamp) {
+    request.log.warn({ headers }, 'Zoom webhook rejected: missing signature or timestamp header');
     return reply.status(401).send({ message: 'Missing Zoom signature or timestamp' });
   }
 
   // Check if timestamp is too old (e.g., > 5 minutes)
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - parseInt(timestamp, 10)) > 300) {
+    request.log.warn({ timestamp }, 'Zoom webhook rejected: timestamp expired');
     return reply.status(401).send({ message: 'Request timestamp expired' });
   }
 
@@ -33,6 +35,9 @@ export const verifyZoomWebhook = async (request: FastifyRequest, reply: FastifyR
   const expectedSignature = `v0=${hash}`;
 
   if (signature !== expectedSignature) {
+    request.log.warn({ received: signature, expected: expectedSignature }, 'Zoom webhook rejected: signature mismatch');
     return reply.status(401).send({ message: 'Invalid Zoom signature' });
   }
+
+  request.log.info('Zoom webhook signature verified');
 };

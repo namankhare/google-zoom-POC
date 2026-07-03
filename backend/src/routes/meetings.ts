@@ -1,7 +1,5 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { prisma } from '../services/prisma.service.js';
 
 export default async function meetingRoutes(fastify: FastifyInstance) {
   fastify.get('/meetings', async (request: FastifyRequest, reply: FastifyReply) => {

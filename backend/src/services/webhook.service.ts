@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { ZoomService } from './zoom.service';
-
-const prisma = new PrismaClient();
+import { prisma } from './prisma.service.js';
+import { ZoomService } from './zoom.service.js';
 
 export class WebhookService {
   static async processMeetingSummary(meetingUuid: string, meetingId: string) {

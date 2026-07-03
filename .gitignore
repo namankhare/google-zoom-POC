@@ -4,4 +4,6 @@ backend/dist/
 backend/*.db
 backend/*.db-journal
 backend/.env
+.env
 .DS_Store
+specs/

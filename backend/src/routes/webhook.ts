@@ -1,17 +1,17 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
-import { config } from '../config/index';
-import { PrismaClient } from '@prisma/client';
-import { verifyZoomWebhook } from '../middleware/verifyZoomWebhook';
-import { WebhookService } from '../services/webhook.service';
-
-const prisma = new PrismaClient();
+import { config } from '../config/index.js';
+import { prisma } from '../services/prisma.service.js';
+import { verifyZoomWebhook } from '../middleware/verifyZoomWebhook.js';
+import { WebhookService } from '../services/webhook.service.js';
 
 export default async function webhookRoutes(fastify: FastifyInstance) {
   fastify.post('/webhooks/zoom', {
     preHandler: [verifyZoomWebhook]
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as any;
+
+    fastify.log.info({ event: body?.event, headers: request.headers }, 'Incoming Zoom webhook request');
 
     // Handle Zoom Webhook URL Validation
     if (body.event === 'endpoint.url_validation') {
@@ -20,6 +20,8 @@ export default async function webhookRoutes(fastify: FastifyInstance) {
         .createHmac('sha256', config.zoom.webhookSecret)
         .update(plainToken)
         .digest('hex');
+
+      fastify.log.info({ plainToken }, 'Responding to Zoom URL validation challenge');
 
       return reply.send({
         plainToken,

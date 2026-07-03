@@ -1,7 +1,8 @@
 import Fastify from 'fastify';
-import { config } from './config/index';
-import webhookRoutes from './routes/webhook';
-import meetingRoutes from './routes/meetings';
+import { config } from './config/index.js';
+import webhookRoutes from './routes/webhook.js';
+import meetingRoutes from './routes/meetings.js';
+import mappingRoutes from './routes/mappings.js';
 
 const fastify = Fastify({
   logger: {
@@ -14,6 +15,7 @@ const fastify = Fastify({
 // Register routes
 fastify.register(webhookRoutes);
 fastify.register(meetingRoutes);
+fastify.register(mappingRoutes);
 
 
 const start = async () => {
