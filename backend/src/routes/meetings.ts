@@ -5,7 +5,7 @@ export default async function meetingRoutes(fastify: FastifyInstance) {
   fastify.get('/meetings', async (request: FastifyRequest, reply: FastifyReply) => {
     const meetings = await prisma.meeting.findMany({
       include: {
-        summaries: true,
+        summaries: { orderBy: { createdAt: 'asc' } },
         logs: { orderBy: { createdAt: 'desc' } },
       },
       orderBy: { createdAt: 'desc' },
@@ -47,7 +47,7 @@ export default async function meetingRoutes(fastify: FastifyInstance) {
     const meeting = await prisma.meeting.findUnique({
       where: { meetingId },
       include: {
-        summaries: true,
+        summaries: { orderBy: { createdAt: 'asc' } },
         logs: true,
       },
     });

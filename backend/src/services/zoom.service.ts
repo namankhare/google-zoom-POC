@@ -34,7 +34,7 @@ export class ZoomService {
   static async getMeetingSummary(meetingUuid: string) {
     const token = await this.getAccessToken();
     const response = await axios.get(
-      `https://api.zoom.us/v2/meetings/${meetingUuid}/meeting_summary`,
+      `https://api.zoom.us/v2/meetings/${encodeMeetingUuid(meetingUuid)}/meeting_summary`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -56,4 +56,19 @@ export class ZoomService {
     );
     return response.data;
   }
+}
+
+/**
+ * Zoom meeting UUIDs are base64 strings and can contain characters like
+ * "/", "+", "==" that are meaningful in a URL path. Per Zoom's API docs,
+ * a UUID that starts with "/" or contains "//" must be *double*
+ * URL-encoded, otherwise Zoom's API will 404. Encoding once is always
+ * safe for UUIDs that don't hit that edge case.
+ */
+function encodeMeetingUuid(meetingUuid: string): string {
+  const encoded = encodeURIComponent(meetingUuid);
+  if (meetingUuid.startsWith('/') || meetingUuid.includes('//')) {
+    return encodeURIComponent(encoded);
+  }
+  return encoded;
 }

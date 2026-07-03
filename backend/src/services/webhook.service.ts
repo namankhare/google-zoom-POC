@@ -40,7 +40,7 @@ export class WebhookService {
       await prisma.meetingSummary.create({
         data: {
           meetingId: meeting.meetingId,
-          summary: summaryData.summary_details ? JSON.stringify(summaryData.summary_details) : 'No summary content',
+          summary: summaryData.summary_overview || 'No summary content',
           rawJson: JSON.stringify(summaryData),
         },
       });
@@ -50,8 +50,8 @@ export class WebhookService {
         where: { meetingId: meeting.meetingId },
         data: {
           summaryRetrieved: true,
-          topic: summaryData.topic || meeting.topic,
-          startTime: summaryData.start_time ? new Date(summaryData.start_time) : meeting.startTime,
+          topic: summaryData.meeting_topic || meeting.topic,
+          startTime: summaryData.meeting_start_time ? new Date(summaryData.meeting_start_time) : meeting.startTime,
         },
       });
 
